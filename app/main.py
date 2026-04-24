@@ -1,4 +1,6 @@
-
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -6,8 +8,12 @@ from app.dp_service import DpService
 from app.cleaner import clean_dp_data
 from app.llm.llm_tool import LLMTool
 from app.mcp.agents.base_agent import BaseAgent
+from app.dropbox_router import dropbox_router
+
 
 app = FastAPI(title="DP Service API")
+
+app.include_router(dropbox_router, prefix="/dropbox")
 
 # ─────────────────────────────
 # Models (inputs API)

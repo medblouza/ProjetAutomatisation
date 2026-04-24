@@ -99,7 +99,7 @@ class DpService:
         self.password = password
         self.token: Optional[str] = None
         self.session = requests.Session()
-        self.session.verify = False   # mirrors "InsecureClient" in C#
+        self.session.verify = False  
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

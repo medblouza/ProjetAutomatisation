@@ -20,26 +20,26 @@ class CDCPipeline:
 
     def run(self, raw_data):
 
-        print("🧹 Cleaning...")
+        print("Cleaning...")
         clean = clean_data(raw_data)
 
-        print("🔍 Analysis...")
+        print("Analysis...")
         analysis = self.analyzer.run(clean)
 
-        print("🎯 Strategy...")
+        print("Strategy...")
         strategy = self.strategy.run(analysis)
 
-        print("🧭 Structure...")
+        print("Structure...")
         structure = self.structure.run(strategy)
 
-        print("✍️ CDC...")
+        print("CDC...")
         cdc = self.content.run({
             "analysis": analysis,
             "strategy": strategy,
             "structure": structure
         })
 
-        print("✅ QA...")
+        print("QA...")
         final = self.qa.run(cdc)
 
         return final
