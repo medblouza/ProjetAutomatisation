@@ -1,15 +1,11 @@
-"""
-app/dropbox_router.py
-Routes FastAPI Dropbox — à monter dans main.py :
-    from app.dropbox_router import dropbox_router
-    app.include_router(dropbox_router, prefix="/dropbox")
-"""
 import secrets
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app.dropbox_service import DropboxService
+from app.dropbox.asset_checker import analyze_asset, result_to_dict
+
 
 dropbox_router = APIRouter(tags=["Dropbox"])
 
@@ -33,6 +29,9 @@ class DownloadRequest(BaseModel):
     access_token: str
     path: str
 
+class CheckAssetsRequest(BaseModel):
+    access_token: str
+    path: str = ""
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 @dropbox_router.get("/auth-url")
@@ -85,3 +84,43 @@ def download_file(req: DownloadRequest):
         media_type=data["content_type"],
         headers={"Content-Disposition": f'attachment; filename="{data["filename"]}"'},
     )
+
+@dropbox_router.post("/check-assets")
+def check_assets(req: CheckAssetsRequest):
+    """Analyse tous les fichiers d'un dossier Dropbox."""
+    svc = DropboxService(req.access_token)
+
+    list_result = svc.list_files(req.path)
+    if not list_result.is_success:
+        raise HTTPException(status_code=400, detail=list_result.message)
+
+    files   = [f for f in list_result.data.get("files", []) if not f.get("is_folder")]
+    results = []
+
+    for file in files:
+        try:
+            dl      = svc.download_file(file["path"])
+            content = dl.data["content"] if dl.is_success else b""
+            result  = analyze_asset(file, content)
+            results.append(result_to_dict(result))
+        except Exception as e:
+            results.append({
+                "name":         file.get("name", ""),
+                "path":         file.get("path", ""),
+                "status":       "error",
+                "badge":        "⛔",
+                "label":        "Bloqué",
+                "issues":       [f"Erreur : {str(e)}"],
+                "suggestions":  ["Vérifier le fichier manuellement"],
+                "category":     "unknown",
+                "needs_manual": True,
+            })
+
+    return {
+        "total":        len(results),
+        "ok":           sum(1 for r in results if r["status"] == "ok"),
+        "warnings":     sum(1 for r in results if r["status"] == "warning"),
+        "errors":       sum(1 for r in results if r["status"] == "error"),
+        "needs_manual": sum(1 for r in results if r.get("needs_manual")),
+        "assets":       results,
+    }

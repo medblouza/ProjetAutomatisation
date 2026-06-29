@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    padding: 16px;
+    background: #fff;
+    color: #333;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px;
+    margin-top: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.2s;
+  }
+  input:focus { border-color: #7F5AF0; }
+  button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: #7F5AF0;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover:not(:disabled) { background: #6B47D6; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  #status {
+    margin-top: 12px;
+    font-size: 12px;
+    min-height: 36px;
+    padding: 8px;
+    border-radius: 6px;
+    display: none;
+  }
+  #status.visible { display: block; }
+  #status.info    { background: #EEF2FF; color: #3730A3; }
+  #status.success { background: #ECFDF5; color: #065F46; }
+  #status.error   { background: #FEF2F2; color: #991B1B; }
+  .divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 16px 0 4px;
+  }
+</style>
+</head>
+<body>
+
+  <label>URL API FastAPI</label>
+  <input id="api-url" value="http://127.0.0.1:8000" />
+
+  <label>Username DP</label>
+  <input id="username" type="text" placeholder="email@exemple.com" />
+
+  <label>Password DP</label>
+  <input id="password" type="password" placeholder="••••••••" />
+
+  <label>Code client (code sage)</label>
+  <input id="client-code" placeholder="549753" />
+
+  <button id="btn" onclick="generate()">Générer le design</button>
+
+  <div id="status"></div>
+
+<script>
+  function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'visible ' + type;
+  }
+
+  async function generate() {
+    const btn        = document.getElementById('btn');
+    const apiUrl     = document.getElementById('api-url').value.trim();
+    const username   = document.getElementById('username').value.trim();
+    const password   = document.getElementById('password').value.trim();
+    const clientCode = document.getElementById('client-code').value.trim();
+
+    if (!username || !password || !clientCode) {
+      setStatus('Remplis tous les champs.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    setStatus('Récupération des données DP + génération Groq...', 'info');
+
+    try {
+      const res = await fetch(`${apiUrl}/api/design/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, client_code: clientCode })
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`API ${res.status} : ${err}`);
+      }
+
+      const designJson = await res.json();
+      setStatus('Construction des frames Figma...', 'info');
+
+      parent.postMessage(
+        { pluginMessage: { type: 'GENERATE', data: designJson } },
+        '*'
+      );
+
+    } catch (e) {
+      setStatus('Erreur : ' + e.message, 'error');
+      btn.disabled = false;
+    }
+  }
+
+  // Réponses du plugin principal
+  window.onmessage = (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+    const btn = document.getElementById('btn');
+
+    if (msg.type === 'DONE') {
+      setStatus(`✓ ${msg.pages} page(s) générée(s) avec succès !`, 'success');
+      btn.disabled = false;
+    }
+    if (msg.type === 'ERROR') {
+      setStatus('Erreur Figma : ' + msg.error, 'error');
+      btn.disabled = false;
+    }
+    if (msg.type === 'PROGRESS') {
+      setStatus(msg.message, 'info');
+    }
+  };
+</script>
+</body>
+</html>

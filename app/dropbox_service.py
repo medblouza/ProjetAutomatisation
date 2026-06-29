@@ -1,7 +1,3 @@
-"""
-app/dropbox_service.py
-Service Dropbox avec le SDK officiel : pip install dropbox
-"""
 import os
 from dataclasses import dataclass
 from typing import Any, Optional
