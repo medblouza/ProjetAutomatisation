@@ -1,48 +1,50 @@
-"""
-app/tools/llm_tool.py
-Interface avec Groq API (llama3.2) — rapide, robuste, sans Ollama.
-pip install groq
-"""
+# app/tools/llm_tool.py
+# Interface avec Gemini API (gemini-2.0-flash) — rapide, robuste.
+# pip install google-generativeai
+
 import os
 import json
 import logging
 import re
-from groq import Groq
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = "llama-3.3-70b-versatile"
-MAX_RETRIES  = 2
-MAX_TOKENS   = 4096
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# Modèles disponibles : gemini-2.0-flash, gemini-2.0-pro, gemini-1.5-pro, gemini-1.5-flash
+GEMINI_MODEL   = "gemini-3.5-flash-lite"
+MAX_RETRIES    = 2
+MAX_TOKENS     = 4096
 
 
 class LLMTool:
     def __init__(
         self,
         api_key: str = "",
-        model: str = GROQ_MODEL,
+        model: str = GEMINI_MODEL,
     ):
-        self.model  = model
-        self.client = Groq(api_key=api_key or GROQ_API_KEY)
+        self.model = model
+        genai.configure(api_key=api_key or GEMINI_API_KEY)
+        self.client = genai.GenerativeModel(model)
 
     def generate(self, prompt: str, expect_json: bool = False) -> str:
         """
-        Envoie un prompt à Groq et retourne le texte généré.
+        Envoie un prompt à Gemini et retourne le texte généré.
         Ne lève jamais d'exception — retourne "" en cas d'échec total.
         """
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 logger.debug(f"[LLM] Attempt {attempt} — model: {self.model}")
 
-                completion = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=MAX_TOKENS,
-                    temperature=0.3,
+                response = self.client.generate_content(
+                    prompt,
+                    generation_config={
+                        "max_output_tokens": MAX_TOKENS,
+                        "temperature": 0.3,
+                    }
                 )
 
-                output = completion.choices[0].message.content or ""
+                output = response.text or ""
                 output = output.strip()
 
                 if not output:

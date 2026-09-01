@@ -12,15 +12,44 @@ from app.mcp.agents.base_agent import BaseAgent
 from app.dropbox_router import dropbox_router
 from app.wireframe_router import router as wireframe_router
 from app.style_extractor_router import router as style_extractor_router
-from app.design_router import router as design_router
+from app.mcp.routers.design_router import router as design_router
+"""from app.design_router import router as design_router"""
 from fastapi.middleware.cors import CORSMiddleware
-from app.site_gen_router import router as site_gen_router
+"""from app.site_gen_router import router as site_gen_router"""
+from app.mcp.routers.web_generator_router import router as web_generator_router
+from app.database import init_db, save_cdc
+from app.cdc_router import router as cdc_router, design_json_router
 
 app = FastAPI(title="DP Service API")
 
-app.add_middleware(
+# Initialisation de la base de données au démarrage
+try:
+    init_db()
+except Exception as _db_exc:
+    import logging
+    logging.getLogger(__name__).error(f"[DB] Impossible d'initialiser la base : {_db_exc}")
+
+"""app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # DEV ONLY
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)"""
+
+"""app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)"""
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,8 +58,15 @@ app.add_middleware(
 app.include_router(style_extractor_router, prefix="/api", tags=["Style Extractor"])
 app.include_router(dropbox_router, prefix="/dropbox")
 app.include_router(wireframe_router, prefix="/api", tags=["Wireframe"])
+print(">>> DESIGN ROUTER LOADED <<<")
 app.include_router(design_router)
-app.include_router(site_gen_router, prefix="/api/site-gen", tags=["Site Generator"])
+app.include_router(web_generator_router)
+app.include_router(cdc_router)
+app.include_router(design_json_router)
+for route in app.routes:
+    print(route.path)
+"""app.include_router(design_router)"""
+"""app.include_router(site_gen_router, prefix="/api/site-gen", tags=["Site Generator"])"""
 
 # ─────────────────────────────
 # Models (inputs API)
@@ -132,6 +168,9 @@ def generate_cdc(req: CodeRequest):
     except:
         score = 0
 
+    # ── Sauvegarde PostgreSQL (silencieuse — ne bloque jamais la réponse) ──
+    save_cdc(company_name=req.code, content=content)
+
     return {"content": content, "score": score}
 @app.post("/suggest-social")
 def suggest_social_api(data: dict):
@@ -142,3 +181,47 @@ def suggest_social_api(data: dict):
 
     except Exception as e:
         return {"error": str(e)}
+
+class DocxRequest(BaseModel):
+    content: str
+    filename: str = "cahier_de_charge.docx"
+
+@app.post("/api/download-docx")
+def download_docx(req: DocxRequest):
+    from docx import Document
+    from io import BytesIO
+    from fastapi.responses import StreamingResponse
+
+    try:
+        doc = Document()
+        for line in req.content.split("\n"):
+            line = line.strip()
+            if not line:
+                doc.add_paragraph("")
+                continue
+            if line.startswith("# "):
+                doc.add_heading(line[2:], level=1)
+            elif line.startswith("## "):
+                doc.add_heading(line[3:], level=2)
+            elif line.startswith("### "):
+                doc.add_heading(line[4:], level=3)
+            elif line.startswith("- ") or line.startswith("* "):
+                doc.add_paragraph(line[2:], style="List Bullet")
+            elif line.startswith("**") and line.endswith("**"):
+                p = doc.add_paragraph()
+                run = p.add_run(line.strip("**"))
+                run.bold = True
+            else:
+                doc.add_paragraph(line)
+        
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f"attachment; filename={req.filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

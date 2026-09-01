@@ -102,3 +102,4 @@ def safe_int(value: Any, fallback: int = 0) -> int:
 def format_list_as_text(items: List[str], prefix: str = "- ") -> str:
     """Convertit une liste en texte formaté."""
     return "\n".join(f"{prefix}{item}" for item in items if item)
+

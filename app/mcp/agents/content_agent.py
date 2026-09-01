@@ -2,11 +2,12 @@
 Génère le cahier des charges complet : H1/H2, contenu SEO, recommandations design.
 """
 import logging
-import time
 from app.llm.llm_tool import LLMTool
 from app.utils.parsers import safe_string, safe_list
 
 logger = logging.getLogger(__name__)
+
+MAX_LLM_CONTENT_CHARS = 4500
 
 
 class ContentAgent:
@@ -17,9 +18,11 @@ class ContentAgent:
 
     def __init__(self, llm: LLMTool):
         self.llm = llm
+        self.llm_generated_chars = 0
 
     def run(self, structure_data: dict) -> dict:
         logger.info("[ContentAgent] Génération du cahier des charges...")
+        self.llm_generated_chars = 0
 
         sections = []
 
@@ -28,7 +31,6 @@ class ContentAgent:
 
         # 2. Brief créatif 
         sections.append(self._generate_brief_section(structure_data))
-
 
         # 3. Présentation client
         sections.append(self._generate_client_section(structure_data))
@@ -49,9 +51,10 @@ class ContentAgent:
         sections.append(self._generate_technical_section(structure_data))
 
         cdc_content = "\n\n".join(filter(None, sections))
-        logger.info(f"[ContentAgent] Sections générées : {len(sections)}")
-        for i, s in enumerate(sections):
-            logger.info(f"[ContentAgent] Section {i} — {len(s)} caractères")
+
+        logger.info(f"[ContentAgent] Total contenu LLM : {self.llm_generated_chars} / {MAX_LLM_CONTENT_CHARS} caractères")
+        logger.info(f"[ContentAgent] CDC final : {len(cdc_content)} caractères")
+
         output = {
             **structure_data,
             "cdc_content": cdc_content,
@@ -165,15 +168,32 @@ class ContentAgent:
         return "\n".join(pages_content)
 
     def _generate_page_content(self, page: dict, data: dict) -> str:
-        time.sleep(1)
-        """Génère le contenu textuel d'une page via le LLM."""
-        company  = data.get("company_name", "")
-        activity = data.get("activity", "")
-        city     = data.get("city", "")
-        sections = safe_string(page.get("sections", []))
-        strategy = data.get("strategy", {})
+        """Génère le contenu textuel d'une page via le LLM avec contrôle de budget."""
+        page_name = page.get("name", "")
+        company   = data.get("company_name", "")
+        activity  = data.get("activity", "")
+        city      = data.get("city", "")
+        sections  = safe_string(page.get("sections", []))
+        strategy  = data.get("strategy", {})
 
-        prompt = f"""Tu es un rédacteur web SEO expert. Rédige le contenu de la page "{page['name']}" pour ce site web.
+        remaining_budget = MAX_LLM_CONTENT_CHARS - self.llm_generated_chars
+
+        if remaining_budget <= 0:
+            logger.warning(
+                f"[ContentAgent] Budget LLM épuisé ({self.llm_generated_chars}/{MAX_LLM_CONTENT_CHARS}). "
+                f"Saut de la génération LLM pour la page {page_name}."
+            )
+            return f"*Contenu à rédiger pour la page {page_name} — {company} à {city}*"
+
+        budget_instruction = ""
+        if remaining_budget < 600:
+            target_chars = max(remaining_budget - 30, 100)
+            budget_instruction = (
+                f"\n- CONTRAINTE DE LONGUEUR STRICTE : Budget restant de {remaining_budget} caractères. "
+                f"Sois ultra concis et ne dépasse pas environ {target_chars} caractères."
+            )
+
+        prompt = f"""Tu es un rédacteur web SEO expert. Rédige un contenu très court, synthétique et percutant pour la page "{page_name}" pour ce site web.
 
 ENTREPRISE : {company} — {activity} à {city}
 SECTIONS DE LA PAGE : {sections}
@@ -181,18 +201,25 @@ TON ÉDITORIAL : {strategy.get('tone', 'professionnel')}
 CTA PRINCIPAL : {strategy.get('cta_primary', 'Demander un devis')}
 MOTS-CLÉS : {safe_string(data.get('keywords', []))}
 
-Rédige :
-- 1 H1 accrocheur
-- 2-3 H2 avec contenu (50-80 mots chacun)
-- 1 paragraphe d'introduction (60-80 mots)
-- Le CTA adapté à la page
+Consignes de rédaction :
+- 1 H1
+- Maximum 2 H2 (très courts)
+- Introduction courte (1 à 2 phrases)
+- Contenu concis (environ 50 à 80 mots maximum au total)
+- 1 CTA
+- Aucune répétition ni remplissage
+- Aucune conclusion inutile
+- Aucune information inventée{budget_instruction}
 
 Format : texte structuré avec titres H1/H2 clairs. Pas de JSON."""
 
         content = self.llm.generate(prompt, expect_json=False)
 
         if not content:
-            return f"*Contenu à rédiger pour la page {page['name']} — {company} à {city}*"
+            return f"*Contenu à rédiger pour la page {page_name} — {company} à {city}*"
+
+        self.llm_generated_chars += len(content)
+        logger.info(f"[ContentAgent] LLM content — Page {page_name} : {len(content)} caractères")
 
         return content
 
@@ -207,17 +234,47 @@ Format : texte structuré avec titres H1/H2 clairs. Pas de JSON."""
             for s in styles
         ) or "- À définir"
 
-        prompt = f"""En tant qu'expert UI/UX, donne des recommandations design courtes pour ce site :
+        remaining_budget = MAX_LLM_CONTENT_CHARS - self.llm_generated_chars
+
+        if remaining_budget <= 0:
+            logger.warning(
+                f"[ContentAgent] Budget LLM épuisé ({self.llm_generated_chars}/{MAX_LLM_CONTENT_CHARS}). "
+                "Utilisation des recommandations design par défaut."
+            )
+            design_reco = (
+                "- Design responsive mobile-first\n"
+                "- Typographie lisible et hiérarchie claire\n"
+                "- Images professionnelles optimisées\n"
+                "- Navigation épurée et intuitive\n"
+                "- Accessibilité et contrastes conformes"
+            )
+        else:
+            budget_instruction = ""
+            if remaining_budget < 400:
+                target_chars = max(remaining_budget - 30, 80)
+                budget_instruction = (
+                    f"\n- CONTRAINTE : Budget restant {remaining_budget} caractères. "
+                    f"Sois ultra concis (max ~{target_chars} caractères)."
+                )
+
+            prompt = f"""En tant qu'expert UI/UX, donne des recommandations design synthétiques et très courtes pour ce site :
 Entreprise : {data.get('company_name', '')} — {data.get('activity', '')}
 Couleurs existantes : {', '.join(str(c) for c in colors if c)}
 Style : {', '.join(s.get('name', '') if isinstance(s, dict) else str(s) for s in styles)}
 
-Donne 5 recommandations concrètes (typographie, layout, images, UX mobile, accessibilité).
+Consignes :
+- 5 recommandations maximum
+- Recommandations très courtes (une seule phrase par puce)
+- Pas d'explications superflues{budget_instruction}
+
 Format texte simple avec tirets."""
 
-        design_reco = self.llm.generate(prompt, expect_json=False)
-        if not design_reco:
-            design_reco = "- Design responsive mobile-first\n- Typographie lisible\n- Images de qualité"
+            design_reco = self.llm.generate(prompt, expect_json=False)
+            if not design_reco:
+                design_reco = "- Design responsive mobile-first\n- Typographie lisible\n- Images de qualité"
+            else:
+                self.llm_generated_chars += len(design_reco)
+                logger.info(f"[ContentAgent] LLM content — Design : {len(design_reco)} caractères")
 
         return f"""## 4. RECOMMANDATIONS DESIGN
 

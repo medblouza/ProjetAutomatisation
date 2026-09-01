@@ -11,7 +11,9 @@ GET /site-generator/download/{project_id}
   Retourne le ZIP du site genere.
 """
 import logging
-
+from fastapi import UploadFile, File
+from pathlib import Path
+import tempfile
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -70,3 +72,4 @@ def download_site(project_id: str) -> FileResponse:
         media_type="application/zip",
         filename="site.zip",
     )
+
