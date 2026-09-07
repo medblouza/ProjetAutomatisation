@@ -1,11 +1,3 @@
-"""
-app/wireframe_router.py
-
-Intégration dans main.py :
-    from app.wireframe_router import router as wireframe_router
-    app.include_router(wireframe_router, prefix="/api", tags=["Wireframe"])
-"""
-
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel

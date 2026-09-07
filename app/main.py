@@ -13,9 +13,7 @@ from app.dropbox_router import dropbox_router
 from app.wireframe_router import router as wireframe_router
 from app.style_extractor_router import router as style_extractor_router
 from app.mcp.routers.design_router import router as design_router
-"""from app.design_router import router as design_router"""
 from fastapi.middleware.cors import CORSMiddleware
-"""from app.site_gen_router import router as site_gen_router"""
 from app.mcp.routers.web_generator_router import router as web_generator_router
 from app.database import init_db, save_cdc
 from app.cdc_router import router as cdc_router, design_json_router

@@ -1,10 +1,3 @@
-"""
-app/agents/wireframe_agent.py
-Génère un wireframe HTML à partir des données nettoyées.
-Groq (llama-3.3-70b-versatile) avec tool calls, un appel par page.
-Pas de Figma — le wireframe est un fichier HTML autonome.
-"""
-
 import json
 import os
 from typing import Optional

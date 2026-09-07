@@ -1,13 +1,3 @@
-"""
-database.py — Connexion PostgreSQL + modèles CDC & DesignJSON + fonctions CRUD.
-
-Tables créées automatiquement au démarrage via `init_db()` :
-  - `cdc`         : cahiers des charges générés
-  - `design_json` : JSON Design générés depuis un fichier CDC
-
-La chaîne de connexion provient de la variable d'environnement DATABASE_URL.
-"""
-
 import logging
 import os
 from datetime import datetime, timezone

@@ -1,6 +1,31 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
+
+// ─── Liste centralisée de toutes les clés localStorage de pages ───────────────
+// Maintenir cette liste à jour si de nouvelles clés sont ajoutées.
+const ALL_PAGE_STATE_KEYS = [
+  // DPExplorer
+  'dp_activeCode',
+  'dp_clientInfo',
+  'dp_cdcContent',
+  'dp_qaScore',
+  'dp_cleanedJson',
+  // SiteGenerator
+  'sg_designJson',
+  'sg_jsonText',
+  'sg_generatedSite',
+  // StyleExtractor
+  'se_styleResult',
+  // Wireframe
+  'dp_explorer_last_wireframe',
+  // cleanedData partagé
+  'dp_explorer_cleaned_data',
+];
+
+const clearAllPageState = () => {
+  ALL_PAGE_STATE_KEYS.forEach((key) => localStorage.removeItem(key));
+};
 
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(() => {
@@ -14,13 +39,19 @@ export const AuthProvider = ({ children }) => {
 
   // Share cleaned data globally since it is needed by both DP Explorer and Wireframe pages
   const [cleanedData, setCleanedData] = useState(() => {
+    // Only restore cleanedData if the user is already authenticated
+    const isAuth = !!localStorage.getItem('dp_explorer_auth');
+    if (!isAuth) return null;
     const saved = localStorage.getItem('dp_explorer_cleaned_data');
     return saved ? JSON.parse(saved) : null;
   });
 
   const login = (username, password) => {
+    // Effacer toutes les données persistées de la session précédente avant de connecter
+    clearAllPageState();
     const userAuth = { username, password };
     setAuth(userAuth);
+    setCleanedData(null);
     localStorage.setItem('dp_explorer_auth', JSON.stringify(userAuth));
   };
 
@@ -28,7 +59,8 @@ export const AuthProvider = ({ children }) => {
     setAuth(null);
     setCleanedData(null);
     localStorage.removeItem('dp_explorer_auth');
-    localStorage.removeItem('dp_explorer_cleaned_data');
+    // Effacer toutes les données persistées de pages
+    clearAllPageState();
   };
 
   const saveDbxToken = (token) => {

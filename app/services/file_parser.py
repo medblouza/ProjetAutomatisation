@@ -1,7 +1,3 @@
-"""
-Extrait le texte brut depuis PDF, DOCX ou TXT.
-pip install pdfplumber python-docx
-"""
 import pdfplumber
 from docx import Document as DocxDocument
 from pathlib import Path

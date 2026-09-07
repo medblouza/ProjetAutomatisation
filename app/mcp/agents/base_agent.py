@@ -28,7 +28,7 @@ class BaseAgent:
     def run(self, raw_data: dict) -> dict:
         total_start = time.time()
         logger.info("=" * 60)
-        logger.info("[Pipeline] 🚀 Démarrage génération CDC")
+        logger.info("[Pipeline] Démarrage génération CDC")
         logger.info(f"[Pipeline] Entreprise : {raw_data.get('company_name', 'Inconnue')}")
         logger.info("=" * 60)
 
@@ -52,12 +52,12 @@ class BaseAgent:
             final     = self._run_step("QA",        self.qa.run,        content)
 
             total_time = time.time() - total_start
-            logger.info(f"[Pipeline] 🎉 CDC généré en {total_time:.1f}s — Score : {final.get('score', 0)}/100")
+            logger.info(f"[Pipeline]  CDC généré en {total_time:.1f}s — Score : {final.get('score', 0)}/100")
 
             return final
 
         except Exception as e:
-            logger.error(f"[Pipeline] ❌ Erreur critique : {e}", exc_info=True)
+            logger.error(f"[Pipeline]  Erreur critique : {e}", exc_info=True)
             return {
                 "score":   0,
                 "content": f"Erreur lors de la génération : {str(e)}",
@@ -68,10 +68,10 @@ class BaseAgent:
     def _run_step(self, name: str, func, data: dict) -> dict:
         try:
             start = time.time()
-            logger.info(f"[Pipeline] ▶ Étape {name}...")
+            logger.info(f"[Pipeline]  Étape {name}...")
             result = func(data)
-            logger.info(f"[Pipeline] ✅ {name} terminé en {time.time() - start:.1f}s")
+            logger.info(f"[Pipeline]  {name} terminé en {time.time() - start:.1f}s")
             return result if isinstance(result, dict) else data
         except Exception as e:
-            logger.error(f"[Pipeline] ❌ Erreur dans {name} : {e}", exc_info=True)
+            logger.error(f"[Pipeline]  Erreur dans {name} : {e}", exc_info=True)
             return data

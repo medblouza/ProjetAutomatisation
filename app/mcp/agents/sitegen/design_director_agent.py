@@ -1,11 +1,3 @@
-"""
-Design Director Agent — decides the visual direction: theme, full color
-palette (resolved from whatever the client gave, even if incomplete), and
-typography. Does NOT touch pages/components — that's the Component Planner's
-job. Keeping this split means a bad component decision never forces a full
-re-roll of the palette, and vice versa.
-"""
-
 from __future__ import annotations
 
 from pydantic import ValidationError

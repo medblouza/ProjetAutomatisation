@@ -1,7 +1,3 @@
-"""
-app/utils/parsers.py
-Fonctions utilitaires robustes pour parser les outputs LLM.
-"""
 import json
 import logging
 import re

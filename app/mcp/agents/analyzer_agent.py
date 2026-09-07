@@ -43,7 +43,7 @@ class AnalyzerAgent:
             "social":             raw_data.get("social", {}),
         }
 
-        logger.info(f"[AnalyzerAgent] ✅ Analyse terminée — {len(output['services'])} services, "
+        logger.info(f"[AnalyzerAgent] Analyse terminée — {len(output['services'])} services, "
                     f"{len(output['differentiators'])} différenciants")
         return output
 

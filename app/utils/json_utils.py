@@ -1,20 +1,3 @@
-"""
-Robust JSON parsing for LLM output.
-
-This module centralizes JSON parsing for all LLM agents.
-
-IMPORTANT:
-- Markdown fences are tolerated.
-- Small surrounding text is tolerated.
-- Truncated JSON is NOT silently repaired.
-- When an object is expected, an internal array must NEVER
-  be extracted and returned as the root JSON.
-- Common LLM syntax slips (unquoted bare-word string values, e.g.
-  `"title": Instagram,`) ARE repaired as a last resort, since this is a
-  observed failure mode of some models (e.g. gpt-oss-120b) that is not a
-  truncation and not a schema issue — just a quoting mistake.
-"""
-
 from __future__ import annotations
 
 import json

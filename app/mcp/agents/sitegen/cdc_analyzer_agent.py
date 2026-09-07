@@ -1,13 +1,3 @@
-"""
-CDCAnalyzerAgent — turns raw CDC text (extracted from PDF/DOCX/TXT) into a
-validated CDCAnalysis object.
-
-This agent does ONE job: understand what the client is asking for. It must
-NOT make any visual/design decision — that is the DesignDirectorAgent's job
-(Phase 2). Keeping this boundary is what lets the pipeline stay modular:
-    raw text -> CDCAnalysis -> (later) DesignJSON
-"""
-
 from __future__ import annotations
 
 from pydantic import ValidationError

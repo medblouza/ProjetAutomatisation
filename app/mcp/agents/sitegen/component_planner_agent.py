@@ -1,21 +1,3 @@
-"""
-Component Planner Agent — the only agent allowed to decide `component type`.
-Takes ONE page from CDCAnalysis (its free-text section labels + verbatim
-content) and resolves it into a List[ComponentInstance] using ONLY the
-closed ComponentType enum. This is where the "no free-form UI" constraint is
-actually enforced: Pydantic will reject any type the LLM invents.
-
-Content is redistributed into component-specific fields (title/subtitle/body/
-items/cta_label) but never rewritten — the words stay the client's.
-
-NOTE on assets normalization: the LLM has been observed to emit asset dicts
-in a shape that doesn't match the Asset schema (e.g. {"url": "...", "alt":
-"..."} instead of {"type", "description", "alt_text", "placeholder_url"}).
-_normalize_asset() / _normalize_component_assets() defensively reshape raw
-LLM output before Pydantic validation, so a schema drift here doesn't crash
-the whole pipeline.
-"""
-
 from __future__ import annotations
 
 from pydantic import ValidationError

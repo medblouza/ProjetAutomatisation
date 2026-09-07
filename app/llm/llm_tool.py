@@ -1,7 +1,3 @@
-# app/tools/llm_tool.py
-# Interface avec Gemini API (gemini-2.0-flash) — rapide, robuste.
-# pip install google-generativeai
-
 import os
 import json
 import logging

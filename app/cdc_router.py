@@ -1,21 +1,3 @@
-"""
-cdc_router.py — Router FastAPI pour l'onglet CDC / JSON.
-
-Endpoints CDC :
-  GET    /api/cdc        → liste de tous les CDC (sans contenu)
-  GET    /api/cdc/{id}   → CDC complet avec contenu
-  POST   /api/cdc        → créer un nouveau CDC
-  PUT    /api/cdc/{id}   → modifier un CDC existant
-  DELETE /api/cdc/{id}   → supprimer un CDC
-
-Endpoints DesignJSON :
-  GET    /api/design-jsons        → liste de tous les DesignJSON (sans contenu)
-  GET    /api/design-jsons/{id}   → DesignJSON complet avec contenu
-  POST   /api/design-jsons        → créer un nouveau DesignJSON
-  PUT    /api/design-jsons/{id}   → modifier un DesignJSON existant
-  DELETE /api/design-jsons/{id}   → supprimer un DesignJSON
-"""
-
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
