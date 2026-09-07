@@ -21,7 +21,7 @@
 
 ## 🎯 À propos du projet
 
-Cette plateforme automatise la création de sites web professionnels pour des entreprises locales. À partir d'un simple code client, elle :
+Cette plateforme automatise la création de sites web professionnels. À partir des données client, elle :
 
 1. **Récupère** les données de l'entreprise depuis l'API **DP LocaletMoi / Local.fr**
 2. **Nettoie et analyse** les données via des agents LLM
