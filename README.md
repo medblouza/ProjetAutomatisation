@@ -41,8 +41,8 @@ Cette plateforme automatise la création de sites web professionnels. À partir 
 ┌────────────────────────────▼─────────────────────────────────────┐
 │                      Backend (FastAPI)                           │
 │                                                                  │
-│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐   │
-│  │  DP Service │  │ Dropbox Svc  │  │    MCP Agent Pipeline  │   │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐    │
+│  │  DP Service │  │ Dropbox Svc  │  │    AI Agent Pipeline  │    │
 │  │ (Local.fr)  │  │ (Cloud sync) │  │                        │   │
 │  └─────────────┘  └──────────────┘  │  AnalyzerAgent         │   │
 │                                     │  BriefAgent            │   │
@@ -52,7 +52,7 @@ Cette plateforme automatise la création de sites web professionnels. À partir 
 │  └─────────────┘  └──────────────┘  │  DesignGeneratorAgent  │   │
 │                                     │  WireframeAgent        │   │
 │  ┌─────────────────────────────┐    │  QAAgent               │   │
-│  │     LLM Tool               │    │  SiteGenAgent          │   │
+│  │     LLM Tool                │    │  SiteGenAgent          │   │
 │  │ (Groq / Gemini / OpenRouter)│    └───────────────────────┘   │
 │  └─────────────────────────────┘                                 │
 │                                                                  │
@@ -300,7 +300,7 @@ Les principaux endpoints exposés par le backend :
 
 ## 🤖 Pipeline d'agents IA
 
-Le cœur du projet repose sur une pipeline d'agents LLM séquentiels (pattern MCP) :
+Le cœur du projet repose sur une pipeline d'agents LLM séquentiels  :
 
 ```
 Données DP brutes
