@@ -1,4 +1,4 @@
-# 🚀 PFE Automatisation — Plateforme IA de Génération de Sites Web
+# 🚀 PFE Automatisation — Plateforme IA de Génération CDC & Sites Web
 
 > Projet de Fin d'Études (PFE) — Automatisation de la création de sites web d'entreprises à partir de données métier, via une pipeline d'agents IA.
 
@@ -298,12 +298,12 @@ Les principaux endpoints exposés par le backend :
 
 ---
 
-## 🤖 Pipeline d'agents IA
+## 🤖 Pipeline d'agents IA Generation CDC
 
 Le cœur du projet repose sur une pipeline d'agents LLM séquentiels  :
 
 ```
-Données DP brutes
+Données DP Netoyées
       │
       ▼
  BaseAgent (entrée)
@@ -324,18 +324,47 @@ Données DP brutes
  ContentAgent → rédaction page par page
       │
       ▼
- DesignGeneratorAgent → charte graphique JSON
-      │
-      ▼
- WireframeAgent → wireframes HTML/CSS
-      │
-      ▼
  QAAgent → vérification qualité & cohérence
-      │
-      ▼
- SiteGenAgent → code HTML/CSS/JS final
+     
+```
+## 🤖 Pipeline d'agents IA Generation site web
 ```
 
+CDC (PDF / DOCX / TXT / MD)
+          │
+          ▼
+ ┌─────────────────────────┐
+ │   CDCAnalyzerAgent      │  /api/design/generate-file
+ │   (LLM)                 │  → Extrait : company, sector, pages,
+ └─────────┬───────────────┘    sections, SEO, branding, CTAs...
+           │  CDCAnalysis (JSON structuré)
+           ▼
+ ┌─────────────────────────┐
+ │  DesignDirectorAgent    │  (LLM)
+ │                         │  → Génère : thème, palette de couleurs,
+ └─────────┬───────────────┘    typographie, style visuel
+           │  DesignSystem
+           ▼
+ ┌─────────────────────────┐
+ │ ComponentPlannerAgent   │  (LLM — une fois par page)
+ │                         │  → Génère : composants UI par page
+ └─────────┬───────────────┘    (hero, cards, CTA, form...)
+           │  PageDesign[]
+           ▼
+ ┌─────────────────────────┐
+ │  DesignGeneratorAgent   │  (assemblage déterministe)
+ │                         │  → Assemble : navigation, layout,
+ └─────────┬───────────────┘    SEO par page → DesignJSON
+           │  DesignJSON ✅
+           ▼
+ ┌─────────────────────────┐
+ │   WebCodeGenerator      │  /api/web-generator/generate
+ │                         │  → Génère : index.html, style.css,
+ └─────────┬───────────────┘    pages HTML + JS → fichiers ZIP
+           │
+           ▼
+      Site web complet 🌐
+```
 ---
 
 ## 👨‍💻 Auteur
